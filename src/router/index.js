@@ -1,29 +1,29 @@
 // Composables
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
   {
-    path: '/',
-    component: () => import('@/layouts/default/Default.vue'),
+    path: "/",
+    component: () => import("@/layouts/default/Default.vue"),
     children: [
       {
-        path: '',
-        name: 'Kanban Board',
+        path: "",
+        name: "Kanban Board",
 
-        component: () => import('@/components/KanbanBoard.vue'),
+        component: () => import("@/components/KanbanBoard.vue"),
       },
     ],
   },
-  // {
-  //   path: '/:id',
-  //   name: 'Task',
-  //   component: () => import('@/components/Task.vue')
-  // }  
-]
+  {
+    path: "/:id",
+    name: "Task",
+    component: () => import("@/components/Task.vue"),
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
-})
+});
 
-export default router
+export default router;

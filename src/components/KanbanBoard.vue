@@ -1,23 +1,13 @@
 <template>
   <div class="mt-2">
-    <v-container class="bg-surface-variant">
-      <v-row>
-        <v-col>
-          <h4 class="font-weight-bold d-flex align-center justify-center">
-            Progress
-          </h4>
-          <v-progress-linear
-            class=""
-            :model-value="calculatePercentage()"
-            :height="25"
-          >
-            Done {{ done.length }} Out of {{ totalTasks }}</v-progress-linear
-          >
-        </v-col>
+    <v-container class="board">
+      <v-row class="">
+        <v-col> <board-progress-bar /></v-col>
       </v-row>
       <v-row>
         <v-col align="right">
           <v-btn
+            @click="showFilterDialog = true"
             class="mr-2"
             variant="outlined"
             size="small"
@@ -25,6 +15,36 @@
           >
             SEARCH & FILTER
           </v-btn>
+
+          <v-dialog v-model="showFilterDialog" max-width="500px">
+            <v-card>
+              <v-card-title>Filter Tasks</v-card-title>
+              <v-card-text>
+                <v-text-field
+                  class="mb-4"
+                  v-model="filter.searchWord"
+                  label="Search"
+                  hide-details
+                ></v-text-field>
+
+                <v-text-field
+                  type="date"
+                  v-model="filter.filteredDate"
+                  label="Select a Date"
+                ></v-text-field>
+                <v-text-field
+                  type="time"
+                  v-model="filter.filteredTime"
+                  label="Estimated Time"
+                ></v-text-field>
+              </v-card-text>
+              <v-card-actions>
+                <!-- Buttons for Apply and Cancel -->
+                <v-btn @click="filterTask">Apply</v-btn>
+                <v-btn @click="closeDialog">Cancel</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
 
           <v-btn
             @click="showDialog = true"
@@ -34,6 +54,7 @@
           >
             ADD TASK
           </v-btn>
+
           <v-dialog v-model="showDialog" max-width="500px">
             <v-card>
               <v-card-title>Add Task</v-card-title>
@@ -72,8 +93,8 @@
 
               <v-card-actions>
                 <!-- Buttons for Save and Cancel -->
-                <v-btn @click="addTask">Save</v-btn>
-                <v-btn @click="cancelTask">Cancel</v-btn>
+                <v-btn @click.prevent="addTask">Save</v-btn>
+                <v-btn @click="closeDialog">Cancel</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -81,29 +102,12 @@
       </v-row>
 
       <v-row>
-        <v-col>
-          <!-- <v-layout> -->
+        <v-col v-for="(status, index) in statusOptions" :key="index">
           <kanban-column
             class="text-center"
-            title="Pending"
-            :cards="pending"
+            :title="status.title"
           ></kanban-column>
         </v-col>
-        <v-col>
-          <kanban-column
-            class="text-center"
-            title="Processing"
-            :cards="processing"
-          ></kanban-column>
-        </v-col>
-        <v-col>
-          <kanban-column
-            class="text-center"
-            title="Done"
-            :cards="done"
-          ></kanban-column>
-        </v-col>
-        <!-- </v-layout> -->
       </v-row>
     </v-container>
   </div>
@@ -111,42 +115,47 @@
 
 <script>
 import KanbanColumn from "./KanbanColumn.vue";
+import BoardProgressBar from "./BoardProgressBar.vue";
 import { useStore } from "@/store";
-import { defineComponent } from "vue";
+import { STATUSES, STATUS_OPTIONS, STATUSES_ARRAY } from "@/constants/index";
+const store = useStore();
 
-export default defineComponent({
+export default {
   components: {
     KanbanColumn,
+    BoardProgressBar,
   },
   data() {
-    const store = useStore();
     return {
+      STATUSES,
+      statusOptions: STATUS_OPTIONS,
       showDialog: false,
+      showFilterDialog: false,
+      editDialog: false,
       newTask: {
         title: "",
         description: "",
+        addComment: "",
         fileInput: [],
         estimatedDate: null,
         estimatedTime: null,
-        selectedStatus: "Pending",
+        selectedStatus: STATUSES.PENDING,
         id: 0,
       },
-      totalTasks: 0,
-      statuses: ["Pending", "Processing", "Done"],
-      pending: store.pending,
-      processing: store.processing,
-      done: store.done,
+      filter: {
+        searchWord: "",
+        filteredDate: null,
+        filteredTime: null,
+      },
+      statuses: STATUSES_ARRAY,
+      tasks: store.tasks,
     };
   },
   methods: {
     addTask() {
-      const store = useStore();
-      console.log("Store: ", store);
-      console.log("New Task: ", this.newTask);
-      const taskId =
-        this.pending.length + this.processing.length + this.done.length + 1;
+      const taskId = this.tasks.length + 1;
       this.newTask.id = taskId;
-      store.addTask( ...this.newTask );
+      store.addTask(this.newTask);
 
       // Clear/Reset the form and close the dialog
       this.newTask.title = "";
@@ -154,28 +163,37 @@ export default defineComponent({
       this.newTask.fileInput = null;
       this.newTask.estimatedDate = null;
       this.newTask.estimatedTime = null;
-      this.newTask.selectedStatus = "Pending";
+      this.newTask.selectedStatus = STATUSES.PENDING;
       this.showDialog = false;
     },
-    cancelTask() {
+    closeDialog() {
       // Clear/Reset the form and close the dialog
       this.newTask.title = "";
       this.newTask.description = "";
       this.newTask.fileInput = null;
       this.newTask.estimatedDate = null;
       this.newTask.estimatedTime = null;
-      this.newTask.selectedStatus = "Pending";
+      this.newTask.selectedStatus = STATUSES.PENDING;
       this.showDialog = false;
+
+      this.filter.searchWord = "";
+      this.filter.filteredDate = null;
+      this.filter.filteredTime = null;
+      this.showFilterDialog = false;
     },
-    calculatePercentage() {
-      this.totalTasks =
-        this.pending.length + this.processing.length + this.done.length;
-      const percentageOfCompletedTasks =
-        (this.done.length / this.totalTasks) * 100;
-      return percentageOfCompletedTasks;
+    filterTask() {
+      store.applyFilter(this.filter.searchWord);
+      this.filter.searchWord = "";
+      this.filter.filteredDate = null;
+      this.filter.filteredTime = null;
+      this.showFilterDialog = false;
     },
   },
-});
+};
 </script>
 
-<style scoped></style>
+<style scoped>
+.board {
+  background-color: #e8ebec9a;
+}
+</style>

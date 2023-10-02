@@ -1,27 +1,45 @@
 // Utilities
-import { createPinia, defineStore } from 'pinia'
+import { createPinia, defineStore } from "pinia";
+import { STATUSES } from "@/constants/index";
+import { tasks } from "../../input"
 
+const pinia = createPinia();
+export default pinia;
 
-const pinia = createPinia()
-export default pinia
-
-export const useStore = defineStore('store', {
+export const useStore = defineStore("store", {
     state: () => ({
-        pending: [],
-        processing: [],
-        done: [],
+        tasks,
     }),
     actions: {
-        addTask({state}, task) {
-            console.log("Task: ", task)
-            console.log("State: ", state)
-            if (task.selectedStatus == "Pending") {
-                state.pending.push({ ...task });
-            } else if (task.selectedStatus == "Processing") {
-                state.processing.push({ ...task });
-            } else if (task.selectedStatus == "Done") {
-                state.done.push({ ...task });
+        addTask(task) {
+            this.tasks.push({ ...task });
+        },
+        applyFilter(searchWord) {
+            this.tasks = this.tasks.map((task) => {
+                task.isHighlighted = task.description.includes(searchWord) || task.title.includes(searchWord);
+                return task;
+            });
+        },
+        deleteTask(taskId) {
+            this.tasks = this.tasks.filter(task => task.id !== taskId)
+        },
+        moveTaskForward(id) {
+            const task = this.tasks.find(item => item.id === id)
+
+            switch (task.selectedStatus) {
+                case STATUSES.PENDING: {
+                    return task.selectedStatus = STATUSES.PROCESSING
+                }
+                case STATUSES.PROCESSING: {
+                    return task.selectedStatus = STATUSES.DONE
+                }
+                case STATUSES.DONE: {
+                    return task.selectedStatus = STATUSES.PENDING
+                }
             }
+        },
+        updateTasks(tasks) {
+            this.tasks = tasks
         }
-    }
-})
+    },
+});
