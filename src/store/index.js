@@ -20,6 +20,12 @@ export const useStore = defineStore("store", {
                 return task;
             });
         },
+        resetFilter() {
+            this.tasks = this.tasks.map((task) => {
+                task.isHighlighted = false
+                return task;
+            });
+        },
         deleteTask(taskId) {
             this.tasks = this.tasks.filter(task => task.id !== taskId)
         },
@@ -40,6 +46,19 @@ export const useStore = defineStore("store", {
         },
         updateTasks(tasks) {
             this.tasks = tasks
+        },
+        editTask(taskId, updatedFields) {
+            const taskIndex = this.tasks.findIndex(
+                (card) => card.id === taskId
+            );
+
+            if (taskIndex !== -1) {
+                const targetEditTask = this.tasks[taskIndex];
+                targetEditTask.title = updatedFields.title;
+                targetEditTask.description = updatedFields.description;
+                this.tasks.splice(taskIndex, 1, targetEditTask);
+
+            }
         }
     },
 });

@@ -13,7 +13,6 @@
         @dragstart="pickupTask($event, card.id)"
         @drop.stop="moveTask($event, card.id)"
       >
-        <!-- <draggable> -->
         <div>
           <v-card-title align="left" :class="labelColor(card.selectedStatus)">
             <v-container>
@@ -52,17 +51,43 @@
             <v-btn variant="text" size="small"> VIEW </v-btn></router-link
           >
         </v-card-actions>
-        <!-- </draggable> -->
       </v-card>
     </template>
     <v-card v-if="!cards.length">
       <v-card-text> No Task Here</v-card-text>
     </v-card>
+    <v-dialog v-model="showEditTaskDialog" max-width="500px">
+      <v-card>
+        <v-card-title>Edit Task</v-card-title>
+        <v-card-text>
+          <!-- Form fields for task input -->
+          <v-text-field
+            v-model="targetEditTask.title"
+            label="Title"
+          ></v-text-field>
+          <v-text-field
+            v-model="targetEditTask.description"
+            label="Description"
+          ></v-text-field>
+          <v-text-field
+            v-model="targetEditTask.comment"
+            label="Comments"
+          ></v-text-field>
+        </v-card-text>
+
+        <v-card-actions>
+          <!-- Buttons for Save and Cancel -->
+          <v-btn @click.prevent="saveEditedTask">Save</v-btn>
+          <v-btn @click="closeDialog">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script>
 import KanbanCard from "./KanbanCard.vue";
+import { STATUSES, } from "@/constants/index";
 import { useStore } from "@/store";
 const store = useStore();
 
@@ -81,34 +106,44 @@ export default {
       return store.tasks.filter((task) => task.selectedStatus === this.title);
     },
   },
+  data() {
+    return {
+      showEditTaskDialog: false,
+      targetEditTask: {
+        title: "",
+        description: "",
+        comment: ""
+      },
+    };
+  },
   methods: {
     deleteTask(taskId) {
       store.deleteTask(taskId);
     },
-    editTask(card) {
+    editTask(taskId) {
       // Set the task being edited
-      this.editedTask = { ...card };
+      this.targetEditTask = this.cards.find((card) => card.id === taskId);
+      this.showEditTaskDialog = true;
     },
     saveEditedTask() {
-      // Find the index of the edited task
-      const taskIndex = this.cards.findIndex(
-        (card) => card.id === this.editedTask.id
-      );
-
-      if (taskIndex !== -1) {
-        // Update the task in the tasks array
-        this.cards.splice(taskIndex, 1, this.editedTask);
-
-        // Clear the editedTask variable
-        this.editedTask = null;
-      }
+      store.editTask(this.targetEditTask.id, this.targetEditTask);
+      this.closeDialog();
+    },
+    closeDialog() {
+      this.targetEditTask = {
+        title: "",
+        description: "",
+        comment: ""
+      };
+      console.log('targetEditTask: ', this.targetEditTask);
+      this.showEditTaskDialog = false;
     },
     labelColor(selectedStatus) {
-      if (selectedStatus == "Pending") {
+      if (selectedStatus == STATUSES.PENDING) {
         return "bg-red-lighten-4";
-      } else if (selectedStatus == "Processing") {
+      } else if (selectedStatus == STATUSES.PROCESSING) {
         return "bg-yellow-lighten-4";
-      } else if (selectedStatus == "Done") {
+      } else if (selectedStatus == STATUSES.DONE) {
         return "bg-green-lighten-4";
       }
     },
@@ -122,7 +157,6 @@ export default {
       const moveTaskId = Number(e.dataTransfer.getData("moveTaskId"));
 
       let tasks = [...store.tasks];
-      console.log(store.tasks);
       const sourceIndex = tasks.findIndex((task) => task.id === moveTaskId);
       tasks[sourceIndex].selectedStatus = this.title;
 

@@ -13,10 +13,6 @@
             <v-list>
               <kanban-card :card="targetTask"></kanban-card>
             </v-list>
-            <v-text-field
-              v-model="targetTask.addComment"
-              label="Add a Comment"
-            ></v-text-field>
           </v-card-text>
         </v-card>
         <v-card v-if="!targetTask">

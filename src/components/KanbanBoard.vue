@@ -26,28 +26,17 @@
                   label="Search"
                   hide-details
                 ></v-text-field>
-
-                <v-text-field
-                  type="date"
-                  v-model="filter.filteredDate"
-                  label="Select a Date"
-                ></v-text-field>
-                <v-text-field
-                  type="time"
-                  v-model="filter.filteredTime"
-                  label="Estimated Time"
-                ></v-text-field>
               </v-card-text>
               <v-card-actions>
                 <!-- Buttons for Apply and Cancel -->
                 <v-btn @click="filterTask">Apply</v-btn>
-                <v-btn @click="closeDialog">Cancel</v-btn>
+                <v-btn @click="resetFilter">Reset</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
 
           <v-btn
-            @click="showDialog = true"
+            @click="showAddTaskDialog = true"
             variant="outlined"
             size="small"
             prepend-icon="mdi:mdi-plus"
@@ -55,7 +44,7 @@
             ADD TASK
           </v-btn>
 
-          <v-dialog v-model="showDialog" max-width="500px">
+          <v-dialog v-model="showAddTaskDialog" max-width="500px">
             <v-card>
               <v-card-title>Add Task</v-card-title>
               <v-card-text>
@@ -129,7 +118,7 @@ export default {
     return {
       STATUSES,
       statusOptions: STATUS_OPTIONS,
-      showDialog: false,
+      showAddTaskDialog: false,
       showFilterDialog: false,
       editDialog: false,
       newTask: {
@@ -148,7 +137,7 @@ export default {
         filteredTime: null,
       },
       statuses: STATUSES_ARRAY,
-      tasks: store.tasks,
+      tasks: store.tasks
     };
   },
   methods: {
@@ -164,7 +153,7 @@ export default {
       this.newTask.estimatedDate = null;
       this.newTask.estimatedTime = null;
       this.newTask.selectedStatus = STATUSES.PENDING;
-      this.showDialog = false;
+      this.showAddTaskDialog = false;
     },
     closeDialog() {
       // Clear/Reset the form and close the dialog
@@ -174,7 +163,7 @@ export default {
       this.newTask.estimatedDate = null;
       this.newTask.estimatedTime = null;
       this.newTask.selectedStatus = STATUSES.PENDING;
-      this.showDialog = false;
+      this.showAddTaskDialog = false;
 
       this.filter.searchWord = "";
       this.filter.filteredDate = null;
@@ -184,10 +173,12 @@ export default {
     filterTask() {
       store.applyFilter(this.filter.searchWord);
       this.filter.searchWord = "";
-      this.filter.filteredDate = null;
-      this.filter.filteredTime = null;
       this.showFilterDialog = false;
     },
+    resetFilter() {
+      store.resetFilter();
+      this.closeDialog()
+    }
   },
 };
 </script>
