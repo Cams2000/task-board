@@ -8,7 +8,7 @@
         class="mb-5"
         v-for="card in cards"
         :key="card.id"
-        :color="card.isHighlighted ? 'yellow' : 'white'"
+        :color="card.isHighlighted ? highlightColor(card.selectedStatus) : 'white'"
         draggable="true"
         @dragstart="pickupTask($event, card.id)"
         @drop.stop="moveTask($event, card.id)"
@@ -145,6 +145,15 @@ export default {
         return "bg-yellow-lighten-4";
       } else if (selectedStatus == STATUSES.DONE) {
         return "bg-green-lighten-4";
+      }
+    },
+    highlightColor(selectedStatus) {
+      if (selectedStatus == STATUSES.PENDING) {
+        return "red-lighten-4";
+      } else if (selectedStatus == STATUSES.PROCESSING) {
+        return "yellow-lighten-4";
+      } else if (selectedStatus == STATUSES.DONE) {
+        return "green-lighten-4";
       }
     },
     moveTaskForward(id) {
